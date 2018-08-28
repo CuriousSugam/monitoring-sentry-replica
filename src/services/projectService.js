@@ -8,7 +8,6 @@ export function getAllProjects() {
 }
 
 export async function getRelatedProject(searchQuery, rowsPerPage, page, emailId) {
-  console.log("searchQuery", searchQuery);
   const email = emailId;
   const adminId = await Admin.forge({
     email: email

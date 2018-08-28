@@ -5,7 +5,7 @@ import { findProject } from "../validators/projectValidator";
 // import Sentry_Wannabe from "../../../sentry-node-module";
 
 const router = Router();
-// const instanceKey = "747a5864-0a56-43e2-9992-4e6234438908";
+// const instanceKey = "37cfa9b4-813f-4e1c-8733-265613cb485d";
 // Sentry_Wannabe.configure(instanceKey);
 
 /**
@@ -17,12 +17,10 @@ const router = Router();
 //     .then(data => res.json({ data }))
 //     .catch(err => {
 //       const errorDetails = err;
-//       console.log("errorDetails in projectcontroller-------------------", errorDetails);
 
 //       return Sentry_Wannabe.log({
-//         status: "454",
-//         statusMessage: "Not found",
-//         errorDetails
+//         message: "nexadasdasdt error",
+//         error: errorDetails
 //       });
 //     });
 // });
@@ -34,7 +32,6 @@ router.get("/", (req, res, next) => {
   const searchQuery = req.query.search || "";
   const rowsPerPage = parseInt(req.query.rowsPerPage);
   const page = parseInt(req.query.page);
-  console.log("searchQuery" + req.query.search);
 
   projectService
     .getRelatedProject(searchQuery, rowsPerPage, page, req.headers.email)
@@ -69,7 +66,8 @@ router.get("/:id", (req, res, next) => {
 
 //       return Sentry_Wannabe.log({
 //         message: "next error",
-//         error: errorDetails
+//         error: errorDetails,
+//         level:
 //       });
 //     });
 // });

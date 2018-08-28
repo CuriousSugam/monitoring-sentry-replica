@@ -1,6 +1,5 @@
-import ProjectInstance from "../models/project_instances";
 import Logs from "../models/logs";
-// import Projects from "../models/projects";
+// import Projects from "../models/projects
 
 /**
  * Get all Logs
@@ -24,7 +23,8 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
           "logs.message",
           "logs.resolved",
           "logs.errorDetails",
-          "projects.project_name"
+          "projects.project_name",
+          "logs.repeat"
         )
         // .select("*")
         .from("logs")
@@ -60,30 +60,83 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
  */
 
 export async function createNewLog(data) {
-  console.log("res+--------", data);
+  console.log(data);
 
-  const { status, statusMessage, errorDetails } = data.error;
-  console.log("status------------------------------------", status);
-  console.log("statusMessage----------------------------", statusMessage);
-  console.log("errorDetails--------------------------", errorDetails);
+  const result = await Logs.forge()
+    .query(q => {
+      q.select("*").onExist(
+        function() {
+          this.select("*")
+            .from("logs")
+            .where("logs.id", 21);
+        }
+        // .whereRaw("logs.id = 21")
+      );
+      console.log("query ", q.toQuery());
+    })
+    .fetchAll()
+    .then(data => data)
+    .catch(err => console.log("eerrrrrrrrrrrrrrrr", err));
 
-  const projectInstanceId = await ProjectInstance.forge({
-    instance_key: data.unique_key
-  })
-    .fetch()
-    .then(data => {
-      const pId = data.get("id");
+  console.log("-------------------------------", result);
 
-      return pId;
-    });
+  return result;
+  // const { status, statusMessage, errorDetails } = data.error;
 
-  return new Logs({
-    type: status,
-    message: statusMessage,
-    project_instance_id: projectInstanceId,
-    errorDetails
-  }).save();
+  // const projectInstanceId = await ProjectInstance.forge({
+  //   instance_key: data.unique_key
+  // })
+  //   .fetch()
+  //   .then(data => {
+  //     const pId = data.get("id");
+
+  //     return pId;
+  //   });
+
+  // return new Logs().query(queryObj => {
+  //   queryObj.column(queryObj.knex.raw().then(data => console.log(data)));
+  // });
+
+  // let dataCheck = await Logs.forge({}).fetchAll();
+
+  // if (dataCheck.length !== 0) {
+  //   dataCheck.map(async (logData, id) => {
+  //     let repeat = 0;
+  //     if (
+  //       logData.attributes.type === status &&
+  //       logData.attributes.errorDetails.message === errorDetails.message &&
+  //       logData.attributes.project_instance_id === projectInstanceId
+  //     ) {
+  //       repeat = await Logs.forge({ id: logData.id })
+  //         .fetch()
+  //         .then(data => {
+  //           return data.attributes.repeat;
+  //         });
+
+  //       return new Logs({ id: logData.id }).save({ repeat: repeat + 1 });
+  //     } else {
+  //       console.log("outside----------------------", repeat);
+
+  //       return new Logs({
+  //         type: status,
+  //         message: statusMessage,
+  //         project_instance_id: projectInstanceId,
+  //         errorDetails
+  //       }).save();
+  //     }
+  //   });
+  // } else {
+  //   console.log("outside-----------outsode-----------");
+
+  //   return new Logs({
+  //     type: status,
+  //     message: statusMessage,
+  //     project_instance_id: projectInstanceId,
+  //     errorDetails
+  //   }).save();
+  // }
 }
+
 /**
  *
  * @param {object} id

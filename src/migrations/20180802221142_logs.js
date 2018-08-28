@@ -14,6 +14,10 @@ export function up(knex) {
     table.string("message").notNull();
     table.json("errorDetails");
     table
+      .integer("repeat")
+      .notNull()
+      .defaultTo(1);
+    table
       .integer("project_instance_id")
       .references("project_instances.id")
       .onDelete("CASCADE");
