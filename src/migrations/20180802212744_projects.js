@@ -11,6 +11,7 @@ export function up(knex) {
       .defaultTo(knex.raw("now()"));
     table.timestamp("updated_at").notNull();
     table.string("project_name").notNull();
+    table.string("description").defaultTo("--");
   });
 }
 

@@ -1,6 +1,6 @@
 import ProjectInstance from "../models/project_instances";
+import { mailSender } from "./emailServices";
 import Logs from "../models/logs";
-// import Projects from "../models/projects";
 
 /**
  * Get all Logs
@@ -28,8 +28,12 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
         )
         // .select("*")
         .from("logs")
-        .innerJoin("project_instances", { "logs.project_instance_id": "project_instances.id" })
-        .innerJoin("project_admins", { "project_instances.project_id": "project_admins.project_id" })
+        .innerJoin("project_instances", {
+          "logs.project_instance_id": "project_instances.id"
+        })
+        .innerJoin("project_admins", {
+          "project_instances.project_id": "project_admins.project_id"
+        })
         .innerJoin("projects", { "projects.id": "project_admins.project_id" })
         .where({ "project_admins.admin_id": userId })
         .where("logs.type", "ILIKE", "%" + searchQuery + "%");
@@ -41,7 +45,10 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
           .where("logs.type", "ILIKE", "%" + searchQuery + "%");
       } else {
         queryObj
-          .where({ "logs.project_instance_id": instanceId, "project_instances.project_id": projectId })
+          .where({
+            "logs.project_instance_id": instanceId,
+            "project_instances.project_id": projectId
+          })
           .where("logs.type", "ILIKE", "%" + searchQuery + "%");
       }
     })
@@ -60,22 +67,34 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
  */
 
 export async function createNewLog(data) {
-  console.log("res+--------", data);
-
   const { status, statusMessage, errorDetails } = data.error;
-  console.log("status------------------------------------", status);
-  console.log("statusMessage----------------------------", statusMessage);
-  console.log("errorDetails--------------------------", errorDetails);
 
-  const projectInstanceId = await ProjectInstance.forge({
+  const { projectInstanceId, projectId } = await ProjectInstance.forge({
     instance_key: data.unique_key
   })
     .fetch()
     .then(data => {
-      const pId = data.get("id");
+      const projectInstanceId = data.get("id");
+      const projectId = data.get("project_id");
 
-      return pId;
+      return { projectInstanceId, projectId };
     });
+
+  const userEmail = await getUserEmail(projectId);
+
+  sendMail(
+    "uzalstha09@gmail.com",
+    userEmail,
+    errorDetails.name,
+
+    "<p style='color:red'>" +
+      statusMessage +
+      "</p>" +
+      "<p>" +
+      errorDetails.message +
+      "</p>" +
+      "<a href='http://localhost:3001/projects/all/project-instances/all/logs' alt='link'> See Logs </a>"
+  );
 
   return new Logs({
     type: status,
@@ -84,7 +103,22 @@ export async function createNewLog(data) {
     errorDetails
   }).save();
 }
-/**
+
+function getUserEmail(projectId) {
+  return new Logs()
+    .query(queryObj => {
+      queryObj
+        .select("*")
+        .from("admins")
+        .innerJoin("project_admins", { "admins.id": "project_admins.admin_id" })
+        .where({ "project_admins.project_id": projectId });
+    })
+    .fetch()
+    .then(data => {
+      return data.attributes.email;
+    });
+}
+/** f
  *
  * @param {object} id
  * @param {promise} logs
@@ -107,4 +141,8 @@ export async function updateLog(id) {
  */
 export function deleteLog(id) {
   return new Logs({ id }).fetch().then(Log => Log.destroy());
+}
+
+export function sendMail(sender, receiver, subject, body) {
+  return mailSender(sender, receiver, subject, body);
 }

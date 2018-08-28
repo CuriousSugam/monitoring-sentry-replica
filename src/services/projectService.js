@@ -1,6 +1,7 @@
 import Project from "../models/projects";
 import AdminProject from "../models/admin_project";
 import Admin from "../models/admins";
+
 import Boom from "boom";
 
 export function getAllProjects() {
@@ -47,7 +48,8 @@ export async function getRelatedProject(searchQuery, rowsPerPage, page, emailId)
 
 export async function createNewProject(project) {
   const projectTable = await new Project({
-    project_name: project.project_name
+    project_name: project.project_name,
+    description: project.description
   }).save();
 
   const projectId = await Project.forge({
@@ -105,11 +107,16 @@ export function getProject(id, userId = null) {
       queryObj
         .select("*")
         .from("projects")
-        .innerJoin("project_admins", { "projects.id": "project_admins.project_id" });
+        .innerJoin("project_admins", {
+          "projects.id": "project_admins.project_id"
+        });
       if (id === "all") {
         queryObj.where({ "project_admins.admin_id": userId });
       } else {
-        queryObj.where({ "project_admins.admin_id": userId, "projects.id": id });
+        queryObj.where({
+          "project_admins.admin_id": userId,
+          "projects.id": id
+        });
       }
     })
     .fetchAll()
@@ -128,4 +135,11 @@ export function getProject(id, userId = null) {
 
   //   return project;
   // });
+}
+
+export function updateProject(projectId, projectName, projectDescription) {
+  return new Project({ id: projectId }).save({
+    project_name: projectName,
+    description: projectDescription
+  });
 }
