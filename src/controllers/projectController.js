@@ -5,7 +5,7 @@ import { findProject } from "../validators/projectValidator";
 // import Sentry_Wannabe from "../../../sentry-node-module";
 
 const router = Router();
-// const instanceKey = "37cfa9b4-813f-4e1c-8733-265613cb485d";
+// const instanceKey = "462c2fa7-de98-4e8b-b772-a52098d88236";
 // Sentry_Wannabe.configure(instanceKey);
 
 /**
@@ -28,7 +28,10 @@ const router = Router();
 /**
  * GET /api/related projects
  */
+
 router.get("/", (req, res, next) => {
+  console.time("queryTime");
+
   const searchQuery = req.query.search || "";
   const rowsPerPage = parseInt(req.query.rowsPerPage);
   const page = parseInt(req.query.page);
@@ -39,6 +42,7 @@ router.get("/", (req, res, next) => {
       return res.json({ data, pagination: data.pagination });
     })
     .catch(err => next(err));
+  console.timeEnd("queryTime");
 });
 
 /**

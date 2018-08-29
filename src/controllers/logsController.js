@@ -30,6 +30,7 @@ router.post("/", (req, res, next) => {
     .createNewLog(req.body)
     .then(data => res.status(HttpStatus.CREATED).json({ data }))
     .catch(err => next(err));
+  console.log("hello from me");
 });
 
 /**

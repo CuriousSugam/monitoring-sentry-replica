@@ -1,5 +1,6 @@
+import ProjectInstance from "../models/project_instances";
+import { mailSender } from "./emailServices";
 import Logs from "../models/logs";
-// import Projects from "../models/projects
 
 /**
  * Get all Logs
@@ -16,6 +17,7 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
     .query(queryObj => {
       queryObj
         .select(
+          // knex.raw(`count(logs.id) as repeat, project_instances `)
           "logs.id",
           "project_instances.instance_name",
           "logs.updated_at",
@@ -28,11 +30,17 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
         )
         // .select("*")
         .from("logs")
-        .innerJoin("project_instances", { "logs.project_instance_id": "project_instances.id" })
-        .innerJoin("project_admins", { "project_instances.project_id": "project_admins.project_id" })
+
+        .innerJoin("project_instances", {
+          "logs.project_instance_id": "project_instances.id"
+        })
+        .innerJoin("project_admins", {
+          "project_instances.project_id": "project_admins.project_id"
+        })
         .innerJoin("projects", { "projects.id": "project_admins.project_id" })
         .where({ "project_admins.admin_id": userId })
         .where("logs.type", "ILIKE", "%" + searchQuery + "%");
+
       if (projectId === "all" && instanceId === "all") {
         return;
       } else if (instanceId === "all") {
@@ -41,7 +49,10 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
           .where("logs.type", "ILIKE", "%" + searchQuery + "%");
       } else {
         queryObj
-          .where({ "logs.project_instance_id": instanceId, "project_instances.project_id": projectId })
+          .where({
+            "logs.project_instance_id": instanceId,
+            "project_instances.project_id": projectId
+          })
           .where("logs.type", "ILIKE", "%" + searchQuery + "%");
       }
     })
@@ -60,84 +71,58 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
  */
 
 export async function createNewLog(data) {
-  console.log(data);
+  const { status, statusMessage, errorDetails } = data.error;
 
-  const result = await Logs.forge()
-    .query(q => {
-      q.select("*").onExist(
-        function() {
-          this.select("*")
-            .from("logs")
-            .where("logs.id", 21);
-        }
-        // .whereRaw("logs.id = 21")
-      );
-      console.log("query ", q.toQuery());
-    })
-    .fetchAll()
-    .then(data => data)
-    .catch(err => console.log("eerrrrrrrrrrrrrrrr", err));
+  const { projectInstanceId, projectId } = await ProjectInstance.forge({
+    instance_key: data.unique_key
+  })
+    .fetch()
+    .then(data => {
+      const projectInstanceId = data.get("id");
+      const projectId = data.get("project_id");
 
-  console.log("-------------------------------", result);
+      return { projectInstanceId, projectId };
+    });
 
-  return result;
-  // const { status, statusMessage, errorDetails } = data.error;
+  const userEmail = await getUserEmail(projectId);
 
-  // const projectInstanceId = await ProjectInstance.forge({
-  //   instance_key: data.unique_key
-  // })
-  //   .fetch()
-  //   .then(data => {
-  //     const pId = data.get("id");
+  sendMail(
+    "uzalstha09@gmail.com",
+    userEmail,
+    errorDetails.name,
 
-  //     return pId;
-  //   });
+    "<p style='color:red'>" +
+      statusMessage +
+      "</p>" +
+      "<p>" +
+      errorDetails.message +
+      "</p>" +
+      "<a href='http://localhost:3001/projects/all/project-instances/all/logs' alt='link'> See Logs </a>"
+  );
 
-  // return new Logs().query(queryObj => {
-  //   queryObj.column(queryObj.knex.raw().then(data => console.log(data)));
-  // });
-
-  // let dataCheck = await Logs.forge({}).fetchAll();
-
-  // if (dataCheck.length !== 0) {
-  //   dataCheck.map(async (logData, id) => {
-  //     let repeat = 0;
-  //     if (
-  //       logData.attributes.type === status &&
-  //       logData.attributes.errorDetails.message === errorDetails.message &&
-  //       logData.attributes.project_instance_id === projectInstanceId
-  //     ) {
-  //       repeat = await Logs.forge({ id: logData.id })
-  //         .fetch()
-  //         .then(data => {
-  //           return data.attributes.repeat;
-  //         });
-
-  //       return new Logs({ id: logData.id }).save({ repeat: repeat + 1 });
-  //     } else {
-  //       console.log("outside----------------------", repeat);
-
-  //       return new Logs({
-  //         type: status,
-  //         message: statusMessage,
-  //         project_instance_id: projectInstanceId,
-  //         errorDetails
-  //       }).save();
-  //     }
-  //   });
-  // } else {
-  //   console.log("outside-----------outsode-----------");
-
-  //   return new Logs({
-  //     type: status,
-  //     message: statusMessage,
-  //     project_instance_id: projectInstanceId,
-  //     errorDetails
-  //   }).save();
-  // }
+  return new Logs({
+    type: status,
+    message: statusMessage,
+    project_instance_id: projectInstanceId,
+    errorDetails
+  }).save();
 }
 
-/**
+function getUserEmail(projectId) {
+  return new Logs()
+    .query(queryObj => {
+      queryObj
+        .select("*")
+        .from("admins")
+        .innerJoin("project_admins", { "admins.id": "project_admins.admin_id" })
+        .where({ "project_admins.project_id": projectId });
+    })
+    .fetch()
+    .then(data => {
+      return data.attributes.email;
+    });
+}
+/** f
  *
  * @param {object} id
  * @param {promise} logs
@@ -160,4 +145,8 @@ export async function updateLog(id) {
  */
 export function deleteLog(id) {
   return new Logs({ id }).fetch().then(Log => Log.destroy());
+}
+
+export function sendMail(sender, receiver, subject, body) {
+  return mailSender(sender, receiver, subject, body);
 }
