@@ -82,7 +82,7 @@
     "winston-daily-rotate-file": "^3.3.0"
   },
   "engines": {
-    "node": ">= 6.9.0",
-    "npm": ">= 3.10.8"
+    "node": "8.10.0",
+    "npm":  "6.1.0"
   }
 }
