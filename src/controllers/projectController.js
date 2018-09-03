@@ -5,7 +5,7 @@ import { findProject } from "../validators/projectValidator";
 // import Sentry_Wannabe from "../../../sentry-node-module";
 
 const router = Router();
-// const instanceKey = "462c2fa7-de98-4e8b-b772-a52098d88236";
+// const instanceKey = "fa962b6d-06f6-4e22-aa4f-a3251bc239bc";
 // Sentry_Wannabe.configure(instanceKey);
 
 /**
@@ -70,8 +70,7 @@ router.get("/:id", (req, res, next) => {
 
 //       return Sentry_Wannabe.log({
 //         message: "next error",
-//         error: errorDetails,
-//         level:
+//         error: errorDetails
 //       });
 //     });
 // });
