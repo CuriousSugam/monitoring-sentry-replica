@@ -6,7 +6,7 @@ import client from "../redis";
 // import Sentry_Wannabe from "../../../sentry-node-module";
 
 const router = Router();
-// const instanceKey = "462c2fa7-de98-4e8b-b772-a52098d88236";
+// const instanceKey = "fa962b6d-06f6-4e22-aa4f-a3251bc239bc";
 // Sentry_Wannabe.configure(instanceKey);
 
 /**
@@ -18,12 +18,10 @@ const router = Router();
 //     .then(data => res.json({ data }))
 //     .catch(err => {
 //       const errorDetails = err;
-//       console.log("errorDetails in projectcontroller-------------------", errorDetails);
 
 //       return Sentry_Wannabe.log({
-//         status: "454",
-//         statusMessage: "Not found",
-//         errorDetails
+//         message: "nexadasdasdt error",
+//         error: errorDetails
 //       });
 //     });
 // });

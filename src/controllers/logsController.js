@@ -2,6 +2,7 @@ import { Router } from "express";
 import HttpStatus from "http-status-codes";
 import * as logsService from "../services/logsServices";
 import * as verifyToken from "../middlewares/verifyTokens";
+import * as Constant from "../utils/constant";
 
 const router = Router();
 
@@ -10,11 +11,23 @@ const router = Router();
  */
 router.get("/", verifyToken.checkAccessToken, (req, res, next) => {
   const searchQuery = req.query.search || "";
-  const rowsPerPage = parseInt(req.query.rowsPerPage);
-  const page = parseInt(req.query.page);
+  let rowsPerPage = "";
+  let page = "";
+  if (!req.query.rowsPerPage || !req.query.page) {
+    rowsPerPage = Constant.INFINITY;
+    page = 0;
+  } else {
+    rowsPerPage = parseInt(req.query.rowsPerPage);
+    page = parseInt(req.query.page);
+  }
+
   logsService
     .getRelatedLogs(searchQuery, rowsPerPage, page, req.headers.instanceid, req.headers.projectid, req.headers.userid)
-    .then(data => res.json({ data, pagination: data.pagination }))
+    .then(data => {
+      console.log(data, "data ++++++++++++++");
+
+      return res.json({ data, pagination: data.pagination });
+    })
     .catch(err => next(err));
 });
 

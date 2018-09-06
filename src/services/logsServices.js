@@ -38,7 +38,6 @@ export function getWeekelyLogs(instanceId, projectId, userId) {
         .count("logs.updated_at")
         .groupBy("daily");
 
-      console.log(queryObj.toQuery());
       if (projectId === "all" && instanceId === "all") {
         return;
       } else if (instanceId === "all") {
@@ -58,10 +57,16 @@ export function getWeekelyLogs(instanceId, projectId, userId) {
 
 export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, projectId, userId) {
   // trying to join
+
+  console.log("searchquery:", searchQuery);
+  console.log("rowsPerPage:", rowsPerPage);
+  console.log("page", page);
+
   return new Logs()
     .query(queryObj => {
       queryObj
         .select(
+          // knex.raw(`count(logs.id) as repeat, project_instances `)
           "logs.id",
           "project_instances.instance_name",
           "logs.updated_at",
@@ -72,6 +77,7 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
           "projects.project_name"
         )
         .from("logs")
+
         .innerJoin("project_instances", {
           "logs.project_instance_id": "project_instances.id"
         })
@@ -80,8 +86,10 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
         })
         .innerJoin("projects", { "projects.id": "project_admins.project_id" })
         .where({ "project_admins.admin_id": userId })
-        .where("logs.type", "ILIKE", "%" + searchQuery + "%")
-        .orderBy("logs.updated_at", "DESC");
+        .where("logs.type", "ILIKE", "%" + searchQuery + "%");
+
+      console.log(queryObj.toQuery());
+
       if (projectId === "all" && instanceId === "all") {
         return;
       } else if (instanceId === "all") {
@@ -98,6 +106,7 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
       }
     })
     .fetchPage({ pageSize: rowsPerPage, page: page + 1 })
+
     .then(data => {
       return data;
     });
