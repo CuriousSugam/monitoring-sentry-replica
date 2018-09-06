@@ -13,6 +13,11 @@ export function getAllLogs() {
 
 export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, projectId, userId) {
   // trying to join
+
+  console.log("searchquery:", searchQuery);
+  console.log("rowsPerPage:", rowsPerPage);
+  console.log("page", page);
+
   return new Logs()
     .query(queryObj => {
       queryObj
@@ -57,6 +62,7 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
       }
     })
     .fetchPage({ pageSize: rowsPerPage, page: page + 1 })
+
     .then(data => {
       return data;
     });
