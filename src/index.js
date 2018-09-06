@@ -1,5 +1,6 @@
 import "./env";
 import "./db";
+import "./redis";
 import cors from "cors";
 import path from "path";
 import Raven from "raven";
@@ -13,6 +14,8 @@ import compression from "compression";
 import json from "./middlewares/json";
 import logger, { logStream } from "./utils/logger";
 import * as errorHandler from "./middlewares/errorHandler";
+import http from "http";
+import socketIO from "socket.io";
 
 // Initialize Raven
 // https://docs.sentry.io/clients/node/integrations/express/
@@ -26,9 +29,19 @@ const APP_HOST = process.env.APP_HOST || "0.0.0.0";
 
 app.set("port", APP_PORT);
 app.set("host", APP_HOST);
-
 app.locals.title = process.env.APP_NAME;
 app.locals.version = process.env.APP_VERSION;
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Credentials", true);
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin,X-Requested-With,Content-Type,Accept,content-type,application/json,Authorization"
+  );
+  next();
+});
 
 // This request handler must be the first middleware on the app
 app.use(Raven.requestHandler());
@@ -55,8 +68,20 @@ app.use(Raven.errorHandler());
 app.use(errorHandler.genericErrorHandler);
 app.use(errorHandler.methodNotAllowed);
 
-app.listen(app.get("port"), app.get("host"), () => {
+// our server instance
+const server = http.createServer(app);
+
+const io = socketIO(server);
+
+io.sockets.on("connection", socket => {
+  socket.on("room", room => {
+    socket.join(room);
+  });
+});
+
+server.listen(app.get("port"), app.get("host"), () => {
   logger.info(`Server started at http://${app.get("host")}:${app.get("port")}/api`);
 });
 
-export default app;
+// export default app;
+export default io;

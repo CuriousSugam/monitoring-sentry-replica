@@ -1,6 +1,10 @@
 import ProjectInstance from "../models/project_instances";
 import { mailSender } from "./emailServices";
 import Logs from "../models/logs";
+import io from "../index.js";
+import bookshelf from "../db";
+
+const knex = bookshelf.knex;
 
 /**
  * Get all Logs
@@ -9,6 +13,47 @@ import Logs from "../models/logs";
  */
 export function getAllLogs() {
   return Logs.fetchAll();
+}
+export const getNewDate = () => {
+  let date = new Date();
+  console.log(date, "getnew date+++++");
+  date.setDate(date.getDate() - 7);
+
+  return date;
+};
+
+export function getWeekelyLogs(instanceId, projectId, userId) {
+  return new Logs()
+    .query(queryObj => {
+      queryObj
+        .select(knex.raw(`logs.updated_at::date as daily`))
+        .innerJoin("project_instances", {
+          "logs.project_instance_id": "project_instances.id"
+        })
+        .innerJoin("project_admins", {
+          "project_instances.project_id": "project_admins.project_id"
+        })
+        .innerJoin("projects", { "projects.id": "project_admins.project_id" })
+        .where({ "project_admins.admin_id": userId })
+        .count("logs.updated_at")
+        .groupBy("daily");
+
+      console.log(queryObj.toQuery());
+      if (projectId === "all" && instanceId === "all") {
+        return;
+      } else if (instanceId === "all") {
+        queryObj.where({ "project_instances.project_id": projectId });
+      } else {
+        queryObj.where({
+          "logs.project_instance_id": instanceId,
+          "project_instances.project_id": projectId
+        });
+      }
+    })
+    .fetchAll()
+    .then(data => {
+      return data;
+    });
 }
 
 export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, projectId, userId) {
@@ -26,7 +71,6 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
           "logs.errorDetails",
           "projects.project_name"
         )
-        // .select("*")
         .from("logs")
         .innerJoin("project_instances", {
           "logs.project_instance_id": "project_instances.id"
@@ -36,7 +80,8 @@ export function getRelatedLogs(searchQuery, rowsPerPage, page, instanceId, proje
         })
         .innerJoin("projects", { "projects.id": "project_admins.project_id" })
         .where({ "project_admins.admin_id": userId })
-        .where("logs.type", "ILIKE", "%" + searchQuery + "%");
+        .where("logs.type", "ILIKE", "%" + searchQuery + "%")
+        .orderBy("logs.updated_at", "DESC");
       if (projectId === "all" && instanceId === "all") {
         return;
       } else if (instanceId === "all") {
@@ -81,6 +126,7 @@ export async function createNewLog(data) {
     });
 
   const userEmail = await getUserEmail(projectId);
+  io.to(userEmail).emit("message", "fetchdata");
 
   sendMail(
     "uzalstha09@gmail.com",

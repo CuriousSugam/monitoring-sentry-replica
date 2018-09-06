@@ -1,6 +1,7 @@
 import Project from "../models/projects";
 import AdminProject from "../models/admin_project";
 import Admin from "../models/admins";
+import client from "../redis";
 
 import Boom from "boom";
 
@@ -9,7 +10,11 @@ export function getAllProjects() {
 }
 
 export async function getRelatedProject(searchQuery, rowsPerPage, page, emailId) {
-  console.log("searchQuery", searchQuery);
+  client.set("name", "shankar");
+  client.get("name", (err, result) => {
+    console.log(result, "name result +++++++++++++++");
+  });
+
   const email = emailId;
   const adminId = await Admin.forge({
     email: email

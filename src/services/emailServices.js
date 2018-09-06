@@ -14,11 +14,9 @@ export function mailSender(sender, receiver, subject = "", body = "") {
     subject: subject, // Subject line
     html: body // plain text body
   };
-  transporter.sendMail(mailOptions, function(err, info) {
+  transporter.sendMail(mailOptions, function(err) {
     if (err) {
       console.log(err);
-    } else {
-      console.log(info);
     }
   });
 }

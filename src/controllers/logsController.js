@@ -18,6 +18,17 @@ router.get("/", verifyToken.checkAccessToken, (req, res, next) => {
     .catch(err => next(err));
 });
 
+router.get("/weeklog", verifyToken.checkAccessToken, (req, res, next) => {
+  logsService
+    .getWeekelyLogs(req.headers.instanceid, req.headers.projectid, req.headers.userid)
+    .then(data => {
+      return res.json({
+        data
+      });
+    })
+    .catch(err => next(err));
+});
+
 router.put("/", verifyToken.checkAccessToken, (req, res, next) => {
   logsService
     .updateLog(req.headers.logid)
