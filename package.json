@@ -47,7 +47,7 @@
     "bookshelf-cache-redis": "^1.2.1",
     "boom": "^5.1.0",
     "chai": "^4.0.0",
-    "codecov": "^2.2.0",
+    "codecov": "^3.6.5",
     "compression": "^1.6.2",
     "cors": "^2.8.3",
     "dotenv": "^4.0.0",
